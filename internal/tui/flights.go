@@ -29,6 +29,14 @@ func (m *Model) matches(f *model.Flight) bool {
 		data.AirlineName(f.Airline), model.Str(f.Aircraft), model.Str(f.Notes), model.Str(f.PNR), f.Date.String(),
 	}, " "))
 	for _, w := range strings.Fields(q) {
+		// "in:ES" keeps flights that touch a country (the passport uses it).
+		if iso, ok := strings.CutPrefix(w, "in:"); ok {
+			iso = strings.ToUpper(iso)
+			if airportCountry(f.From) != iso && airportCountry(f.ArrivalAirport()) != iso {
+				return false
+			}
+			continue
+		}
 		if !strings.Contains(hay, w) {
 			return false
 		}

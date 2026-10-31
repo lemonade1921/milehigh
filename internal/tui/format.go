@@ -207,3 +207,11 @@ func (m *Model) statusPill(f *model.Flight, now time.Time) string {
 		return sPillDim.Render("DEPARTS " + strings.ToUpper(relative(f.Departure(), now)))
 	}
 }
+
+// airportCountry is the ISO country code of an airport ("" when unknown).
+func airportCountry(code string) string {
+	if a := data.AirportByCode(code); a != nil {
+		return a.Country
+	}
+	return ""
+}

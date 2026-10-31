@@ -62,10 +62,12 @@ type Model struct {
 	filter string
 
 	// Map tab
-	mapYear   int
-	mapView   *mapState
-	statsYear int
-	passSel   int
+	mapYear    int
+	mapView    *mapState
+	statsYear  int
+	passISO    string
+	passScroll int
+	passSort   passSortMode
 
 	modal       modal
 	form        *form
@@ -472,8 +474,10 @@ func (m *Model) viewFooter() string {
 		add("←→", "year")
 	case tabPassport:
 		add("↑↓", "move")
-		add("m", "mark visited")
-		add("u", "unmark")
+		add("enter", "flights")
+		add("s", "sort")
+		add("m", "add country")
+		add("u", "remove")
 	}
 	add("i", "import")
 	add("x", "export")
@@ -506,6 +510,7 @@ func helpText() string {
 		k("r", "refresh times and gates (AeroDataBox, your own key)") +
 		k("/", "filter flights by code, airport, city or airline") +
 		k("t", "jump to the next flight") +
+		k("s / m / u", "passport: sort, add a country by hand, remove one") +
 		k("i", "import a Skyline backup or a Flighty CSV") +
 		k("x", "export a backup that Skyline on Android can restore") +
 		k("S", "settings: name, units, clock, AeroDataBox key") +

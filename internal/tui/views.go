@@ -3,7 +3,6 @@ package tui
 import (
 	"fmt"
 	"math"
-	"sort"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,7 +10,6 @@ import (
 	"github.com/lemonade1921/milehigh/internal/data"
 	"github.com/lemonade1921/milehigh/internal/model"
 	"github.com/lemonade1921/milehigh/internal/stats"
-	"github.com/lemonade1921/milehigh/internal/store"
 	"github.com/lemonade1921/milehigh/internal/worldmap"
 )
 
@@ -265,148 +263,4 @@ func topList(title string, cs []stats.Count, w, n int, label func(stats.Count) s
 		out = append(out, pad(l, w-14)+" "+bar(float64(c.N)/float64(maxN), 8, sSky)+pad("", 8-int(math.Ceil(float64(c.N)/float64(maxN)*8)))+sText.Render(num))
 	}
 	return strings.Join(out, "\n")
-}
-
-// ---------- Passport ----------
-
-type passRow struct {
-	iso     string
-	n       int
-	planned bool
-}
-
-func (m *Model) passRows() []passRow {
-	added, removed := m.st.Prefs().VisitedEdits()
-	cs := stats.Countries(m.flights, added, removed, m.now)
-	var rows []passRow
-	for iso, n := range cs.Visited {
-		rows = append(rows, passRow{iso, n, false})
-	}
-	sort.Slice(rows, func(i, j int) bool {
-		if rows[i].n != rows[j].n {
-			return rows[i].n > rows[j].n
-		}
-		return stats.CountryName(rows[i].iso) < stats.CountryName(rows[j].iso)
-	})
-	var planned []passRow
-	for iso, n := range cs.Planned {
-		planned = append(planned, passRow{iso, n, true})
-	}
-	sort.Slice(planned, func(i, j int) bool { return stats.CountryName(planned[i].iso) < stats.CountryName(planned[j].iso) })
-	return append(rows, planned...)
-}
-
-func (m *Model) updatePassport(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	rows := m.passRows()
-	switch msg.String() {
-	case "up", "k":
-		if m.passSel > 0 {
-			m.passSel--
-		}
-	case "down", "j":
-		if m.passSel < len(rows)-1 {
-			m.passSel++
-		}
-	case "m", "a":
-		m.openPrompt(promptCountry, "Mark a country as visited", "country name or ISO code (e.g. Andorra, AD)", "")
-	case "u", "d", "delete":
-		if m.passSel < len(rows) {
-			iso := rows[m.passSel].iso
-			_ = m.st.UpdatePrefs(func(p *store.Prefs) { p.MarkVisited(iso, false) })
-			m.setStatus("Removed "+stats.CountryName(iso)+" from your passport", false)
-		}
-	}
-	return m, nil
-}
-
-func (m *Model) markCountry(q string) {
-	q = strings.TrimSpace(q)
-	if q == "" {
-		return
-	}
-	var hit *data.Country
-	for _, c := range data.Countries() {
-		if strings.EqualFold(c.ISO, q) || strings.EqualFold(c.Name, q) {
-			hit = c
-			break
-		}
-	}
-	if hit == nil {
-		for _, c := range data.Countries() {
-			if strings.HasPrefix(strings.ToLower(c.Name), strings.ToLower(q)) {
-				hit = c
-				break
-			}
-		}
-	}
-	if hit == nil {
-		m.setStatus("No country called "+q, true)
-		return
-	}
-	_ = m.st.UpdatePrefs(func(p *store.Prefs) { p.MarkVisited(hit.ISO, true) })
-	m.setStatus("Added "+data.Flag(hit.ISO)+" "+hit.Name+" to your passport", false)
-}
-
-func (m *Model) viewPassport(w, h int) string {
-	rows := m.passRows()
-	if m.passSel >= len(rows) {
-		m.passSel = max(0, len(rows)-1)
-	}
-	visited, conts := 0, map[string]bool{}
-	for _, r := range rows {
-		if !r.planned {
-			visited++
-			if c := data.CountryByISO(r.iso); c != nil && c.Continent != "" {
-				conts[c.Continent] = true
-			}
-		}
-	}
-	pct := float64(visited) / 195 * 100
-	head := " " + sBig.Foreground(cAccent).Render(fmt.Sprintf("%d countries", visited)) +
-		sDim.Render(fmt.Sprintf(" · %d of 7 continents · %.0f%% of the world", len(conts), pct))
-
-	listW := 44
-	var lines []string
-	plannedHeader := false
-	start := 0
-	visible := h - 4
-	if m.passSel >= visible {
-		start = m.passSel - visible + 1
-	}
-	for i, r := range rows {
-		if r.planned && !plannedHeader {
-			plannedHeader = true
-			if i >= start {
-				lines = append(lines, "", sSection.Render(" PLANNED"))
-			}
-		}
-		if i < start {
-			continue
-		}
-		name := stats.CountryName(r.iso)
-		cnt := sDim.Render(fmt.Sprintf("%d %s", r.n, plural2(r.n, "flight")))
-		if r.n == 0 {
-			cnt = sDim.Render("added by hand")
-		}
-		line := " " + data.Flag(r.iso) + "  " + pad(truncate(name, 24), 24) + " " + cnt
-		if i == m.passSel {
-			line = lipgloss.NewStyle().Background(cSelBg).Render(pad(sAccent.Render("▌")+line, listW))
-		} else {
-			line = " " + line
-		}
-		lines = append(lines, line)
-	}
-	if len(rows) == 0 {
-		lines = append(lines, sDim.Render("  No countries yet. Fly somewhere, or press m to add one."))
-	}
-	list := strings.Join(lines, "\n")
-	if w < listW+30 {
-		return head + "\n\n" + list
-	}
-	mw, mh := w-listW-3, h-3
-	c := worldmap.New(mw, mh, worldmap.Fit([][2]float64{{-56, -170}, {80, 180}}, mw, mh, 30))
-	c.Countries = m.countryLayer()
-	c.DotMatrix = false
-	c.DrawLand()
-	return head + "\n\n" + lipgloss.JoinHorizontal(lipgloss.Top, lipgloss.NewStyle().Width(listW).Render(list), "   ", c.Render(mapStyles))
 }

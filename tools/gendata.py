@@ -108,6 +108,11 @@ write_gz("planes.tsv.gz", out.getvalue())
 # Countries: iso, name, continent.
 with gzip.open(os.path.join(SRC, "countries.geojson.gz"), "rt", encoding="utf-8") as f:
     geo = json.load(f)
+# Names for countries OpenFlights lacks (microstates, newer codes) or spells in an older way.
+for line in open(os.path.join(SRC, "country_names.tsv"), encoding="utf-8"):
+    p = line.rstrip("\n").split("\t")
+    if len(p) == 2:
+        iso_names[p[0]] = p[1]
 codes = sorted({ft["properties"]["iso"] for ft in geo["features"]} | set(continents) | set(iso_names))
 out = io.StringIO()
 for c in codes:

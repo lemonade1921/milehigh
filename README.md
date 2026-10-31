@@ -49,7 +49,11 @@
   time. Pan with the arrow keys, zoom with `+`/`-`.
 - **Stats**: flights, distance (and laps of the Earth), time in the air, top airports, airlines,
   routes, countries, continents and aircraft — for all time or any year.
-- **Passport**: every country you've visited, with a world map; add or remove countries by hand.
+- **Passport**: every country you've visited, each with a passport stamp of your first arrival,
+  flight counts (international and domestic), first, last and next visits, the airports and
+  airlines you used there and the countries you flew to from it. Alongside: progress per
+  continent, new countries by year and highlights. Sort with `s`, add or remove countries by hand
+  (`m`/`u`), and press Enter to see the flights behind a country.
 - **Add flights in seconds**: type a flight number and its route is looked up; type a city and it
   finds the airport; see which flights fly a route.
 - **Live**: aircraft position from community ADS-B receivers (`l`) and the weather at both ends (`w`).
