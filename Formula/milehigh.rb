@@ -1,7 +1,7 @@
 # Homebrew formula. This repository doubles as a tap:
 #   brew tap lemonade1921/milehigh https://github.com/lemonade1921/milehigh
 #   brew install milehigh
-# The Release workflow updates url and sha256 for every tagged version.
+# The Release workflow points url and sha256 at each release's source archive.
 class Milehigh < Formula
   desc "Flight log for the terminal, inspired by Flighty, that shares backups with Skyline"
   homepage "https://github.com/lemonade1921/milehigh"

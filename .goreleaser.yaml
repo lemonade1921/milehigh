@@ -26,6 +26,11 @@ archives:
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files: [LICENSE, NOTICE, README.md]
 
+source:
+  enabled: true
+  name_template: "{{ .ProjectName }}-{{ .Version }}"
+  prefix_template: "{{ .ProjectName }}-{{ .Version }}/"
+
 checksum:
   name_template: checksums.txt
 

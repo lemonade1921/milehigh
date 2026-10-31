@@ -67,12 +67,12 @@ jobs:
         run: |
           set -euo pipefail
           version="${TAG#v}"
-          url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${TAG}.tar.gz"
-          # Authenticated, so it also works while the repository is private.
-          curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" -o source.tar.gz "$url"
-          tar tzf source.tar.gz | awk "NR==1" | grep -q "^milehigh-${version}/"
-          sha=$(sha256sum source.tar.gz | cut -d' ' -f1)
-          rm source.tar.gz
+          # The source archive GoReleaser attached to the release; its checksum is in checksums.txt.
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/milehigh-${version}.tar.gz"
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p checksums.txt
+          sha=$(awk -v f="milehigh-${version}.tar.gz" '$2 == f {print $1}' checksums.txt)
+          rm checksums.txt
+          test -n "$sha"
           sed -i -E "s|^  url \".*\"|  url \"${url}\"|; s|^  sha256 \".*\"|  sha256 \"${sha}\"|" Formula/milehigh.rb
           sed -i -E "s|^pkgver=.*|pkgver=${version}|; s|^pkgrel=.*|pkgrel=1|; s|^sha256sums=.*|sha256sums=('${sha}')|" packaging/arch/PKGBUILD
           sed -i -E "s|^Version:( +).*|Version:\1${version}|" packaging/fedora/milehigh.spec

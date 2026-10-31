@@ -9,7 +9,7 @@ url="https://github.com/lemonade1921/milehigh"
 license=('GPL-2.0-or-later')
 depends=('glibc')
 makedepends=('go')
-source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+source=("$url/releases/download/v$pkgver/$pkgname-$pkgver.tar.gz")
 sha256sums=('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
 
 build() {
