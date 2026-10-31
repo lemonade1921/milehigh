@@ -175,5 +175,5 @@ go run ./cmd/milehigh
 python3 tools/gendata.py      # rebuild the bundled data from tools/source (needs Pillow)
 ```
 
-Releases: push a tag like `v0.2.0`. The Release workflow publishes binaries and packages and
-updates the Homebrew formula, the PKGBUILD and the Fedora spec.
+Releases: change `VERSION` on main (or push a tag like `v0.2.0`). The Release workflow tags it,
+publishes binaries and packages, and updates the Homebrew formula, the PKGBUILD and the Fedora spec.
