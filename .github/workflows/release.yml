@@ -1,0 +1,48 @@
+name: Release
+
+# Push a tag like v0.2.0 to publish: binaries, .rpm/.pkg.tar.zst/.deb packages, and the
+# Homebrew formula, PKGBUILD and Fedora spec on main are updated to the new version.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  packaging:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Point the formula, PKGBUILD and spec at this release
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz"
+          sha=$(curl -fsSL "$url" | sha256sum | cut -d' ' -f1)
+          sed -i -E "s|^  url \".*\"|  url \"${url}\"|; s|^  sha256 \".*\"|  sha256 \"${sha}\"|" Formula/milehigh.rb
+          sed -i -E "s|^pkgver=.*|pkgver=${version}|; s|^pkgrel=.*|pkgrel=1|; s|^sha256sums=.*|sha256sums=('${sha}')|" packaging/arch/PKGBUILD
+          sed -i -E "s|^Version:( +).*|Version:\1${version}|" packaging/fedora/milehigh.spec
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula packaging
+          git diff --cached --quiet || git commit -m "Update packaging to ${GITHUB_REF_NAME}"
+          git push origin HEAD:main

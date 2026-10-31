@@ -1,0 +1,63 @@
+# GoReleaser (MIT) builds every release: binaries for macOS and Linux, plus ready-to-install
+# Arch (.pkg.tar.zst), Fedora (.rpm) and Debian (.deb) packages. See .github/workflows/release.yml.
+version: 2
+project_name: milehigh
+
+before:
+  hooks:
+    - go mod download
+    - go test ./...
+
+builds:
+  - id: milehigh
+    main: ./cmd/milehigh
+    binary: milehigh
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - id: default
+    formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files: [LICENSE, NOTICE, README.md]
+
+checksum:
+  name_template: checksums.txt
+
+nfpms:
+  - id: packages
+    package_name: milehigh
+    file_name_template: "{{ .ConventionalFileName }}"
+    vendor: lemonade1921
+    homepage: https://github.com/lemonade1921/milehigh
+    maintainer: lemonade1921 <lemonade1921@users.noreply.github.com>
+    description: |-
+      Your flight log in the terminal, inspired by Flighty.
+      Shares backups with Skyline, the Android app.
+    license: GPL-2.0-or-later
+    formats: [rpm, archlinux, deb]
+    bindir: /usr/bin
+    contents:
+      - src: LICENSE
+        dst: /usr/share/licenses/milehigh/LICENSE
+      - src: NOTICE
+        dst: /usr/share/licenses/milehigh/NOTICE
+      - src: README.md
+        dst: /usr/share/doc/milehigh/README.md
+    archlinux:
+      packager: lemonade1921 <lemonade1921@users.noreply.github.com>
+
+changelog:
+  sort: asc
+  filters:
+    exclude: ["^docs:", "^ci:", "Update packaging"]
+
+release:
+  github:
+    owner: lemonade1921
+    name: milehigh

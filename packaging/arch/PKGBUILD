@@ -1,0 +1,33 @@
+# Maintainer: lemonade1921 <lemonade1921@users.noreply.github.com>
+# Builds milehigh from source. Ready for the AUR; or build locally with `makepkg -si`.
+pkgname=milehigh
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Flight log for the terminal, inspired by Flighty, that shares backups with Skyline"
+arch=('x86_64' 'aarch64')
+url="https://github.com/lemonade1921/milehigh"
+license=('GPL-2.0-or-later')
+depends=('glibc')
+makedepends=('go')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd "$pkgname-$pkgver"
+  export CGO_CPPFLAGS="${CPPFLAGS}" CGO_CFLAGS="${CFLAGS}" CGO_CXXFLAGS="${CXXFLAGS}" CGO_LDFLAGS="${LDFLAGS}"
+  export GOFLAGS="-buildmode=pie -trimpath -mod=readonly -modcacherw"
+  go build -ldflags "-linkmode=external -s -w -X main.version=$pkgver" -o milehigh ./cmd/milehigh
+}
+
+check() {
+  cd "$pkgname-$pkgver"
+  go test ./...
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  install -Dm755 milehigh "$pkgdir/usr/bin/milehigh"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 NOTICE "$pkgdir/usr/share/licenses/$pkgname/NOTICE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}

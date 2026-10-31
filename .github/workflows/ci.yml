@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Verify modules
+        run: go mod verify
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test ./...
+      - name: Build
+        run: go build -trimpath -o milehigh ./cmd/milehigh && ./milehigh version
+      - name: Smoke test (Skyline backup round trip)
+        run: |
+          export MILEHIGH_HOME="$RUNNER_TEMP/log"
+          ./milehigh add "VY 1234" 2026-11-04 BCN LHR
+          ./milehigh export "$RUNNER_TEMP/backup.json"
+          MILEHIGH_HOME="$RUNNER_TEMP/log2" ./milehigh import "$RUNNER_TEMP/backup.json"
+          MILEHIGH_HOME="$RUNNER_TEMP/log2" ./milehigh list | grep "BCN → LHR"
+
+  packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Build packages (snapshot)
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: release --snapshot --clean
+      - uses: actions/upload-artifact@v4
+        with:
+          name: milehigh-packages
+          path: |
+            dist/*.rpm
+            dist/*.pkg.tar.zst
+            dist/*.deb
+            dist/*.tar.gz
