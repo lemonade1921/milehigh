@@ -5,8 +5,8 @@
 class Milehigh < Formula
   desc "Flight log for the terminal, inspired by Flighty, that shares backups with Skyline"
   homepage "https://github.com/lemonade1921/milehigh"
-  url "https://github.com/lemonade1921/milehigh/releases/download/v0.1.1/milehigh-0.1.1.tar.gz"
-  sha256 "43efa4e485302412b3d20f36f2d3828f63bd49728ec9e51642946598675252ce"
+  url "https://github.com/lemonade1921/milehigh/releases/download/v0.2.0/milehigh-0.2.0.tar.gz"
+  sha256 "600386fe8f98915b7df5e600dd22e392c2675d081dc1d769f08f42cc0e5e6b22"
   license "GPL-2.0-or-later"
   head "https://github.com/lemonade1921/milehigh.git", branch: "main"
 
