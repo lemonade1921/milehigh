@@ -2,11 +2,11 @@ name: Release
 
 # To publish, change VERSION on main (or push a tag like v0.2.0). This tags the release, builds
 # binaries and .rpm/.pkg.tar.zst/.deb packages, and updates the Homebrew formula, PKGBUILD and
-# Fedora spec on main to the new version.
+# Fedora spec on main to the new version (re-run for an existing tag just re-syncs those).
 on:
   push:
     branches: [main]
-    paths: [VERSION]
+    paths: [VERSION, .github/workflows/release.yml]
     tags: ["v*"]
 
 permissions:
@@ -54,7 +54,6 @@ jobs:
 
   packaging:
     needs: release
-    if: needs.release.outputs.skip != 'true'
     runs-on: ubuntu-latest
     env:
       TAG: ${{ needs.release.outputs.tag }}
@@ -63,10 +62,17 @@ jobs:
         with:
           ref: main
       - name: Point the formula, PKGBUILD and spec at this release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           version="${TAG#v}"
           url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${TAG}.tar.gz"
-          sha=$(curl -fsSL "$url" | sha256sum | cut -d' ' -f1)
+          # Authenticated, so it also works while the repository is private.
+          curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" -o source.tar.gz "$url"
+          tar tzf source.tar.gz | head -1 | grep -q "^milehigh-${version}/"
+          sha=$(sha256sum source.tar.gz | cut -d' ' -f1)
+          rm source.tar.gz
           sed -i -E "s|^  url \".*\"|  url \"${url}\"|; s|^  sha256 \".*\"|  sha256 \"${sha}\"|" Formula/milehigh.rb
           sed -i -E "s|^pkgver=.*|pkgver=${version}|; s|^pkgrel=.*|pkgrel=1|; s|^sha256sums=.*|sha256sums=('${sha}')|" packaging/arch/PKGBUILD
           sed -i -E "s|^Version:( +).*|Version:\1${version}|" packaging/fedora/milehigh.spec
