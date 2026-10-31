@@ -1,7 +1,7 @@
 # Maintainer: lemonade1921 <lemonade1921@users.noreply.github.com>
 # Builds milehigh from source. Ready for the AUR; or build locally with `makepkg -si`.
 pkgname=milehigh
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc="Flight log for the terminal, inspired by Flighty, that shares backups with Skyline"
 arch=('x86_64' 'aarch64')
@@ -10,7 +10,7 @@ license=('GPL-2.0-or-later')
 depends=('glibc')
 makedepends=('go')
 source=("$url/releases/download/v$pkgver/$pkgname-$pkgver.tar.gz")
-sha256sums=('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
+sha256sums=('43efa4e485302412b3d20f36f2d3828f63bd49728ec9e51642946598675252ce')
 
 build() {
   cd "$pkgname-$pkgver"

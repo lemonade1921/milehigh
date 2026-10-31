@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           milehigh
-Version:        0.1.0
+Version:        0.1.1
 Release:        1%{?dist}
 Summary:        Flight log for the terminal, inspired by Flighty
 License:        GPL-2.0-or-later
